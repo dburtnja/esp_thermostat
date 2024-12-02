@@ -2,12 +2,17 @@
 #define ESP_THERMOSTAT_THERMOMETER_H
 
 #include <optional>
+#include "ds18b20.h"
+
 
 class Thermometer{
 public:
     bool init() noexcept;
 
-    [[nodiscard]] std::optional<float> get_value() const noexcept;
+    [[nodiscard]] float get_value() const noexcept;
+
+private:
+    ds18b20_device_handle_t device_{};
 };
 
 

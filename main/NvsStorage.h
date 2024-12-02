@@ -8,7 +8,9 @@ class NvsStorage{
 public:
     bool init() noexcept;
 
-    std::optional<float> get_temperature_threshold() noexcept;
+    [[nodiscard]] std::optional<float> get_temperature_threshold() const noexcept;
+
+    bool set_temperature_threshold(float threshold) noexcept;
 
 private:
     const char* STORAGE_NAME{"thermostat_data"};
@@ -17,6 +19,8 @@ private:
     const char* end_TIME_KEY{"end_time"};
 
     nvs_handle_t nvs_handle_;
+
+    mutable std::optional<float> cashed_temperature_threshold{};
 };
 
 

@@ -3,6 +3,7 @@
 #include <driver/gpio.h>
 #include "freertos/FreeRTOS.h"
 #include <freertos/task.h>
+#include <esp_log.h>
 
 #include "NvsStorage.h"
 #include "Led.h"
@@ -34,41 +35,39 @@ extern "C" void app_main(void)
     led.init();
 
     if (!nvs_storage.init()) {
-        led.fast_blinking();
-        printf("Error: can't initialise NVS.\n");
-        return;
+        ESP_LOGI(__FILENAME__, "Error: can't initialise NVS.\n");
+        led.fast_blinking_blocking_call();
     }
 
     if (!thermometer.init()) {
-        led.fast_blinking();
-        printf("Error: can't initialise thermometer.\n");
+        ESP_LOGI(__FILENAME__, "Error: can't initialise thermometer.\n");
+        led.fast_blinking_blocking_call();
         return;
     }
 
     auto temperature_threshold = nvs_storage.get_temperature_threshold();
     if (!temperature_threshold) {
-        printf("Error: can't read temperature threshold.\n");
-        led.fast_blinking();
+        ESP_LOGI(__FILENAME__, "Error: can't read temperature threshold.\n");
+        led.fast_blinking_blocking_call();
         return;
     }
 
+    led.slow_blinking();
+
     while (true) {
-        led.on();
         auto temperature = thermometer.get_value();
 
-        if (!temperature) {
-            led.fast_blinking();
-            printf("Error: can't read temperature.\n");
-        }
+        std::cout << "Current temperature: " << temperature << std::endl;
+        std::cout << "Temperature threshold: " << *temperature_threshold << std::endl;
 
-        if (*temperature < *temperature_threshold) {
+        if (temperature < *temperature_threshold) {
+            led.on();
             set_heater(ON);
         } else {
+            led.off();
             set_heater(OFF);
         }
 
-        vTaskDelay(1000);
-        led.off();
-        vTaskDelay(10000);
+        vTaskDelay(pdMS_TO_TICKS(60000));
     }
 }

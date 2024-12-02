@@ -2,6 +2,8 @@
 
 #include "nvs_flash.h"
 
+#define DEFAULT_TEMPERATURE_THRESHOLD 21.5f
+
 bool NvsStorage::init() noexcept{
     // Initialize NVS
     esp_err_t ret = nvs_flash_init();
@@ -19,18 +21,51 @@ bool NvsStorage::init() noexcept{
         return false;
     }
 
-    // todo validate existence of the data
+    auto is_ok = get_temperature_threshold();
+
+    if (!is_ok) {
+        // Setting default values
+        if (!set_temperature_threshold(DEFAULT_TEMPERATURE_THRESHOLD)) {
+            return false;
+        }
+    }
 
     return true;
 }
 
-std::optional<float> NvsStorage::get_temperature_threshold() noexcept {
-    size_t size{};
+bool NvsStorage::set_temperature_threshold(float threshold) noexcept {
+    printf("Writing date to NVS...\n");
+
+    esp_err_t err = nvs_set_blob(nvs_handle_, TEMPERATURE_KEY, &threshold, sizeof(threshold));
+    if (err == ESP_OK) {
+        err = nvs_commit(nvs_handle_);
+        if (err == ESP_OK) {
+            printf("Date saved.");
+            return true;
+        } else {
+            printf("Failed to commit date!\n");
+            return false;
+        }
+    } else {
+        printf("Failed to save date!\n");
+        return false;
+    }
+}
+
+std::optional<float> NvsStorage::get_temperature_threshold() const noexcept {
+    if (cashed_temperature_threshold) {
+        return cashed_temperature_threshold;
+    }
+
+    size_t size{sizeof(float)};
     float result;
 
     esp_err_t err = nvs_get_blob(nvs_handle_, TEMPERATURE_KEY,
                                  &result, &size);
-    if (err == ESP_OK && size == sizeof(float)) {
+
+    printf("Read t=%f, data_size=%ui", result, size);
+    if (err == ESP_OK) {
+        cashed_temperature_threshold = result;
         return result;
     } else {
         printf("No temperature.");
