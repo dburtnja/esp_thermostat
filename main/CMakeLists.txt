@@ -3,4 +3,7 @@ idf_component_register(SRCS
         "NvsStorage.cpp"
         "Led.cpp"
         "Thermometer.cpp"
+        "HttpServer.cpp"
+        "View.cpp"
+        "IpClock.cpp"
         INCLUDE_DIRS ".")

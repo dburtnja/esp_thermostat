@@ -1,0 +1,32 @@
+menu "Thermostat configuration"
+
+    config WIFI_SSID
+        string "WiFi SSID"
+        default "myssid"
+        help
+            SSID (network name) for the example to connect to.
+
+    config WIFI_PASSWORD
+        string "WiFi Password"
+        default "mypassword"
+        help
+            WiFi password (WPA or WPA2) for the example to use.
+
+    config SECONDARY_WIFI_SSID
+            string "Secondary WiFi SSID"
+            default "secondaryssid"
+            help
+                SSID (network name) for the secondary Wi-Fi network.
+
+    config SECONDARY_WIFI_PASSWORD
+        string "Secondary WiFi Password"
+        default "secondarypassword"
+        help
+            WiFi password (WPA or WPA2) for the secondary Wi-Fi network.
+
+    config WIFI_MAX_RETRIES
+        int "Max connection retries"
+        default 5
+        help
+            Number of retries before switching to new network.
+endmenu
