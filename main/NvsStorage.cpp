@@ -35,8 +35,10 @@ bool NvsStorage::init() noexcept{
 
     auto temp_threshold = get_temperature_threshold();
 
-    if (!are_equal(temp_threshold, UNEXPECTED_TEMPERATURE)) {
-        // Setting default values
+    std::cout << "Init temperature threshold: " << temp_threshold << std::endl;
+
+    if (are_equal(temp_threshold, UNEXPECTED_TEMPERATURE)) {
+        std::cout << "Setting default values" << std::endl;
         if (!set_temperature_threshold(DEFAULT_TEMPERATURE_THRESHOLD) ||
             !set_start_time_threshold(DEFAULT_START_TIME_THRESHOLD) ||
             !set_end_time_threshold(DEFAULT_END_TIME_THRESHOLD)) {
@@ -44,6 +46,7 @@ bool NvsStorage::init() noexcept{
         }
     }
 
+    std::cout << "NVS initialized!" << std::endl;
     return true;
 }
 
@@ -77,7 +80,8 @@ float NvsStorage::get_temperature_threshold() const noexcept {
     esp_err_t err = nvs_get_blob(nvs_handle_, TEMPERATURE_KEY,
                                  &result, &size);
 
-    printf("Read t=%f, data_size=%ui", result, size);
+    std::cout << "Read temperature: " << result << " float size:" << size << std::endl;
+
     if (err == ESP_OK) {
         cashed_temperature_threshold_ = result;
         return result;

@@ -11,13 +11,13 @@ class View {
 public:
     explicit View(const NvsStorage& nvs_storage, const Thermometer& thermometer, const IpClock& clock);
 
-    [[nodiscard]] std::string get_home_page() const noexcept;
+    [[nodiscard]] std::string get_home_page(const std::string& status) const noexcept;
 
 private:
     const NvsStorage& nvs_storage_;
     const Thermometer& thermometer_;
     const IpClock& clock_;
-    
+
     static constexpr const char* main_paige_html_template = R"rawliteral(
 <!DOCTYPE html>
 <html>
@@ -68,7 +68,7 @@ private:
 </head>
 <body>
     <h1>ESP32 LED Control</h1>
-    <p>Temperature:</p>
+    <p>Temperature: {}</p>
     <form method="post" action="/">
         <label for="temperature">Enter high temperature, (current {}):</label>
         <input type="text" id="temperature" name="temperature">
@@ -81,7 +81,8 @@ private:
         <br/>
         <button type="submit">Submit</button>
     </form>
-    <p>Temperature: {}. Time: {}</p>
+    <p>Time: {}</p>
+    <p>Status: {}</p>
     <br/>
     <button onclick="window.location.href='/'">Reload</button>
 </body>

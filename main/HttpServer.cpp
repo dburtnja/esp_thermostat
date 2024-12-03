@@ -7,7 +7,7 @@
 #include "esp_http_server.h"
 
 #include <esp_mac.h>
-#include <unordered_map>
+#include <vector>
 
 
 #define DEFAULT_SSID CONFIG_WIFI_SSID
@@ -71,9 +71,8 @@ bool HttpServer::init_wifi() noexcept {
     return connect();
 }
 
-
 bool HttpServer::connect() {
-    std::unordered_map<std::string, std::string> credentials{
+    std::vector<std::pair<std::string, std::string>> credentials{
             {DEFAULT_SSID, DEFAULT_PWD},
             {SECOND_SSID, SECOND_PWD}
     };
