@@ -4,19 +4,27 @@
 #include "NvsStorage.h"
 #include "Thermometer.h"
 #include "IpClock.h"
+#include "Heater.h"
 
 #include <string>
 
 class View {
 public:
-    explicit View(const NvsStorage& nvs_storage, const Thermometer& thermometer, const IpClock& clock);
+    explicit View(const NvsStorage &nvs_storage,
+                  const Thermometer &thermometer,
+                  const IpClock &clock,
+                  const Heater& heater);
 
     [[nodiscard]] std::string get_home_page(const std::string& status) const noexcept;
+    void save_latest_check_time();
 
 private:
     const NvsStorage& nvs_storage_;
     const Thermometer& thermometer_;
     const IpClock& clock_;
+    const Heater& heater_;
+
+    std::string latest_check_time_{};
 
     static constexpr const char* main_paige_html_template = R"rawliteral(
 <!DOCTYPE html>
@@ -81,8 +89,8 @@ private:
         <br/>
         <button type="submit">Submit</button>
     </form>
-    <p>Time: {}</p>
-    <p>Status: {}</p>
+    <p>Latest check time: {}</p>
+    <p>Heater: {} Status: {}</p>
     <br/>
     <button onclick="window.location.href='/'">Reload</button>
 </body>

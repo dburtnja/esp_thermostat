@@ -13,9 +13,10 @@ void Led::init() noexcept {
     gpio_set_direction(BLINK_GPIO, GPIO_MODE_OUTPUT);
 }
 
-void Led::fast_blinking_blocking_call() noexcept {
-    while (true) {
+void Led::fast_blinking_blocking_call_1_min() noexcept {
+    for (int i = 0; i < 3; ++i) {
         blink_interval_ms(150);
+        std::cout << "Blink " << i << std::endl;
     }
 }
 
@@ -32,8 +33,10 @@ void Led::off() noexcept {
 }
 
 void Led::slow_blinking() {
+    is_blinking = true;
+
     task_ = std::thread([&]{
-        while (true) {
+        while (is_blinking) {
             if (is_on) {
                 vTaskDelay(pdMS_TO_TICKS(2000));
                 continue;
@@ -49,4 +52,8 @@ void Led::blink_interval_ms(uint32_t interval) {
     vTaskDelay(pdMS_TO_TICKS(interval));
     gpio_set_level(BLINK_GPIO, 0);
     vTaskDelay(pdMS_TO_TICKS(interval));
+}
+
+void Led::stop_slow_blinking() {
+    is_blinking = false;
 }

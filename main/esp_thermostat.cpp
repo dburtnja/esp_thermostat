@@ -1,6 +1,4 @@
 #include <iostream>
-#include <hal/gpio_types.h>
-#include <driver/gpio.h>
 #include "freertos/FreeRTOS.h"
 #include <freertos/task.h>
 #include <esp_log.h>
@@ -14,24 +12,7 @@
 #include "HttpServer.h"
 #include "View.h"
 #include "IpClock.h"
-
-#define HEATER_GPIO GPIO_NUM_13
-
-enum HeaterState {
-    ON = 0,
-    OFF = 1
-};
-
-void init_heater() {
-    gpio_reset_pin(HEATER_GPIO);
-    /* Set the GPIO as a push/pull output */
-    gpio_set_direction(HEATER_GPIO, GPIO_MODE_OUTPUT);
-}
-
-void set_heater(HeaterState state) {
-    std::cout << "Set heater " << state << std::endl;
-    gpio_set_level(HEATER_GPIO, state);
-}
+#include "Heater.h"
 
 void add_post_handlers(HttpServer& server, std::pair<View*,NvsStorage*>& context) {
     auto accept_data = [] (httpd_req_t *req) -> esp_err_t {
@@ -116,43 +97,51 @@ extern "C" void app_main(void)
     Thermometer thermometer{};
     HttpServer server{};
     IpClock clock{};
-    View view{nvs_storage, thermometer, clock};
+    Heater heater{};
+    View view{nvs_storage, thermometer, clock, heater};
     std::pair<View*,NvsStorage*> pointers{&view, &nvs_storage};
 
     led.init();
-    init_heater();
-    set_heater(OFF);
+    led.slow_blinking();
+
+    heater.init();
+    heater.set(OFF);
 
     if (!nvs_storage.init()) {  // Should be initialised first!
         ESP_LOGI(__FILENAME__, "Error: can't initialise NVS.\n");
-        led.fast_blinking_blocking_call();
+        led.fast_blinking_blocking_call_1_min();
+        abort();
     }
 
     if (!thermometer.init()) {
         ESP_LOGI(__FILENAME__, "Error: can't initialise thermometer.\n");
-        led.fast_blinking_blocking_call();
+        led.fast_blinking_blocking_call_1_min();
+        abort();
     }
 
     if (!server.init()) {
         ESP_LOGI(__FILENAME__, "Error: can't initialise Server.\n");
-        led.fast_blinking_blocking_call();
+        led.fast_blinking_blocking_call_1_min();
+        abort();
     }
 
     if (!clock.init()) {
         ESP_LOGI(__FILENAME__, "Error: can't initialise IpClock.\n");
-        led.fast_blinking_blocking_call();
+        led.fast_blinking_blocking_call_1_min();
+        abort();
     }
 
     add_get_handler(server, view);
     add_post_handlers(server, pointers);
 
-    led.slow_blinking();
+    led.stop_slow_blinking();
+    led.on();
 
     while (true) {
-        if (clock.get_current_hour() < nvs_storage.get_start_time_threshold()) {
-            vTaskDelay(pdMS_TO_TICKS(60000));
-            continue;
-        } else if (clock.get_current_hour() > nvs_storage.get_end_time_threshold()) {
+        auto current_hour = clock.get_current_hour();
+        if (current_hour < nvs_storage.get_start_time_threshold() ||
+            current_hour > nvs_storage.get_end_time_threshold()) {
+            heater.set(OFF);
             vTaskDelay(pdMS_TO_TICKS(60000));
             continue;
         }
@@ -164,11 +153,9 @@ extern "C" void app_main(void)
         std::cout << "Temperature threshold: " << temperature_threshold << std::endl;
 
         if (temperature < temperature_threshold) {
-            led.on();
-            set_heater(ON);
+            heater.set(ON);
         } else {
-            led.off();
-            set_heater(OFF);
+            heater.set(OFF);
         }
 
         vTaskDelay(pdMS_TO_TICKS(60000));
