@@ -5,6 +5,10 @@ View::View(const NvsStorage &nvs_storage, const Thermometer &thermometer, const 
     : nvs_storage_(nvs_storage), thermometer_(thermometer), clock_(clock), heater_(heater) {
 }
 
+std::string View::get_json_data() const noexcept {
+    return std::format(iot_json_template, thermometer_.get_value());
+}
+
 std::string View::get_home_page(const std::string& status) const noexcept {
     // Temperature threshold, start threshold, end threshold, current temperature
     auto result = std::format(main_paige_html_template,

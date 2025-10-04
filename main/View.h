@@ -17,6 +17,7 @@ public:
 
     [[nodiscard]] std::string get_home_page(const std::string& status) const noexcept;
     void save_latest_check_time();
+    [[nodiscard]] std::string get_json_data() const noexcept;
 
 private:
     const NvsStorage& nvs_storage_;
@@ -25,6 +26,10 @@ private:
     const Heater& heater_;
 
     std::string latest_check_time_{};
+
+    static constexpr const char* iot_json_template = R"rawliteral(
+{{"temperature":{}}}
+)rawliteral";
 
     static constexpr const char* main_paige_html_template = R"rawliteral(
 <!DOCTYPE html>
@@ -75,7 +80,7 @@ private:
     </style>
 </head>
 <body>
-    <h1>ESP32 LED Control</h1>
+    <h1>ESP32 Thermostat</h1>
     <p>Temperature: {}</p>
     <form method="post" action="/">
         <label for="temperature">Enter high temperature, (current {}):</label>

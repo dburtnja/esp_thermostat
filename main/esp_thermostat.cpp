@@ -60,9 +60,38 @@ void add_post_handlers(HttpServer& server, std::pair<View*,NvsStorage*>& context
         return result;
     };
 
-
     httpd_uri_t handle{
         .uri = "/",
+        .method = HTTP_POST,
+        .handler = accept_data,
+        .user_ctx = &context
+    };
+    server.add_handler(handle);
+}
+
+void add_iot_post_handlers(HttpServer& server, std::pair<View*,NvsStorage*>& context) {
+    auto accept_data = [] (httpd_req_t *req) -> esp_err_t {
+        if (!req->user_ctx) {
+            return ESP_FAIL;
+        }
+
+        auto* context = static_cast<std::pair<View *, NvsStorage *> *>(req->user_ctx);
+
+        std::vector<char> buffer(512);
+        httpd_req_recv(req, buffer.data(), buffer.size());
+
+        std::cout << "Request: " << buffer.data() << std::endl;
+
+        std::string response{};
+        response = context->first->get_json_data();
+
+        httpd_resp_set_type(req, "application/json");
+        httpd_resp_send(req, response.c_str(), HTTPD_RESP_USE_STRLEN);
+        return ESP_OK;
+    };
+
+    httpd_uri_t handle{
+        .uri = "/iot",
         .method = HTTP_POST,
         .handler = accept_data,
         .user_ctx = &context
@@ -133,11 +162,14 @@ extern "C" void app_main(void)
 
     add_get_handler(server, view);
     add_post_handlers(server, pointers);
+    add_iot_post_handlers(server, pointers);
 
     led.stop_slow_blinking();
     led.on();
 
     while (true) {
+        view.save_latest_check_time();
+
         auto current_hour = clock.get_current_hour();
         if (current_hour < nvs_storage.get_start_time_threshold() ||
             current_hour > nvs_storage.get_end_time_threshold()) {
